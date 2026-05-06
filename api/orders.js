@@ -15,29 +15,26 @@ export default async function handler(req, res) {
 
   try {
     const today = new Date().toISOString().slice(0, 10);
-    const url = `https://api.foodticket.nl/v2/orders?client_id=${CLIENT_ID}&date=${today}`;
+    const url = `https://api.foodticket.net/1/orders?sdate_start=${today}&sdate_end=${today}`;
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        'X-OrderBuddy-Client-Id': CLIENT_ID,
+        'X-OrderBuddy-API-Key': API_KEY,
+        'Accept': 'application/json',
       },
     });
 
     const rawText = await response.text();
 
-    // Try to parse as JSON
     let data;
     try {
       data = JSON.parse(rawText);
     } catch {
-      // Return raw response for debugging if not JSON
       return res.status(200).json({
         success: false,
         error: 'Foodticket API gaf geen JSON terug',
         status: response.status,
-        url: url,
         raw: rawText.slice(0, 500),
       });
     }
@@ -46,12 +43,13 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: 'Foodticket API fout', details: data });
     }
 
+    const orders = Array.isArray(data) ? data : (data?.orders ?? data?.data ?? []);
+
     return res.status(200).json({
       success: true,
       date: today,
-      total_orders: data?.total ?? data?.length ?? (Array.isArray(data) ? data.length : 0),
-      orders: Array.isArray(data) ? data.slice(0, 50) : data?.orders?.slice(0, 50) ?? data?.data?.slice(0, 50),
-      raw_keys: typeof data === 'object' ? Object.keys(data) : [],
+      total_orders: data?.total ?? orders.length,
+      orders: orders.slice(0, 50),
     });
   } catch (err) {
     return res.status(500).json({ error: 'Verbindingsfout', message: err.message });
