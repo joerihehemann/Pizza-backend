@@ -1,5 +1,33 @@
 import fetch from 'node-fetch';
 
+// Helper: parse XML tag value
+function xml(tag, str) {
+  const m = str.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, 'i'));
+  return m ? m[1].trim() : '';
+}
+
+// Helper: extract all <order> blocks
+function parseOrders(xmlStr) {
+  const matches = [...xmlStr.matchAll(/<order[\s\S]*?<\/order>/gi)];
+  return matches.map(m => {
+    const o = m[0];
+    return {
+      id: xml('id', o),
+      date: xml('date', o),
+      status: xml('status', o) || xml('orderstatus', o),
+      firstname: xml('firstname', o),
+      lastname: xml('lastname', o),
+      street: xml('street', o),
+      streetnumber: xml('streetnumber', o),
+      zipcode: xml('zipcode', o),
+      city: xml('city', o),
+      delivery_type: xml('delivery_type', o) || xml('ordertype', o),
+      total_price: xml('total_price', o) || xml('price', o) || xml('total', o),
+      phone: xml('phone', o),
+    };
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -10,7 +38,7 @@ export default async function handler(req, res) {
   const API_KEY = process.env.FOODTICKET_API_KEY;
 
   if (!CLIENT_ID || !API_KEY) {
-    return res.status(500).json({ error: 'Missing Foodticket credentials in environment variables' });
+    return res.status(500).json({ error: 'Missing Foodticket credentials' });
   }
 
   try {
@@ -21,34 +49,19 @@ export default async function handler(req, res) {
       headers: {
         'X-OrderBuddy-Client-Id': CLIENT_ID,
         'X-OrderBuddy-API-Key': API_KEY,
-        'Accept': 'application/json',
       },
     });
 
     const rawText = await response.text();
 
-    let data;
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      return res.status(200).json({
-        success: false,
-        error: 'Foodticket API gaf geen JSON terug',
-        status: response.status,
-        raw: rawText.slice(0, 500),
-      });
-    }
-
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Foodticket API fout', details: data });
-    }
-
-    const orders = Array.isArray(data) ? data : (data?.orders ?? data?.data ?? []);
+    // Parse XML orders
+    const orders = parseOrders(rawText);
+    const total = rawText.match(/<total>(\d+)<\/total>/);
 
     return res.status(200).json({
       success: true,
       date: today,
-      total_orders: data?.total ?? orders.length,
+      total_orders: total ? parseInt(total[1]) : orders.length,
       orders: orders.slice(0, 50),
     });
   } catch (err) {
