@@ -2,6 +2,7 @@
   "name": "pizza-eta-backend",
   "version": "1.0.0",
   "description": "PizzaETA backend - Foodticket live orders",
+  "type": "module",
   "dependencies": {
     "node-fetch": "^3.3.2"
   },
