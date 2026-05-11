@@ -1,5 +1,9 @@
 import fetch from 'node-fetch';
 
+const CLIENT_ID = process.env.FOODTICKET_CLIENT_ID;
+const API_KEY = process.env.FOODTICKET_API_KEY;
+const BASE_URL = process.env.FOODTICKET_API_URL || 'https://api.foodticket.net/1';
+
 function xmlTag(tag, str) {
   const m = str.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, 'i'));
   return m ? m[1].trim() : '';
@@ -26,16 +30,12 @@ function parseDeliverers(xmlStr) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  const base = process.env.FOODTICKET_API_URL || 'https://api.foodticket.net/1';
-  const user = process.env.FOODTICKET_USERNAME;
-  const pass = process.env.FOODTICKET_PASSWORD;
-  const auth = Buffer.from(`${user}:${pass}`).toString('base64');
 
   try {
-    const response = await fetch(`${base}/deliverers`, {
+    const response = await fetch(`${BASE_URL}/deliverers`, {
       headers: {
-        'Authorization': `Basic ${auth}`,
-        'Accept': 'application/json, text/xml, */*',
+        'X-OrderBuddy-Client-Id': CLIENT_ID,
+        'X-OrderBuddy-API-Key': API_KEY,
       }
     });
     const rawText = await response.text();
