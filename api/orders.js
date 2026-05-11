@@ -40,24 +40,36 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   const today = new Date().toISOString().slice(0, 10);
-  const url = `${BASE_URL}/orders?date=${today}`;
+  // Probeer zonder date filter als fallback
+  const url = `${BASE_URL}/orders?date=${today}&limit=50`;
+
+  const startTime = Date.now();
 
   try {
     const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 25000);
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
     let rawText;
+    let httpStatus;
     try {
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
           'X-OrderBuddy-Client-Id': CLIENT_ID,
           'X-OrderBuddy-API-Key': API_KEY,
+          'Connection': 'keep-alive',
         },
       });
+      httpStatus = response.status;
       rawText = await response.text();
     } finally {
       clearTimeout(timeout);
+    }
+
+    const elapsed = Date.now() - startTime;
+
+    if (req.query.debug) {
+      return res.status(200).json({ elapsed, httpStatus, raw: (rawText||'').slice(0, 500) });
     }
 
     let orders = [];
@@ -71,11 +83,13 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       date: today,
+      elapsed_ms: elapsed,
       total_orders: orders.length,
       orders,
     });
   } catch (err) {
-    const msg = err.name === 'AbortError' ? 'Foodticket API timeout' : err.message;
-    return res.status(500).json({ success: false, error: msg });
+    const elapsed = Date.now() - startTime;
+    const msg = err.name === 'AbortError' ? `Foodticket API timeout after ${elapsed}ms` : err.message;
+    return res.status(500).json({ success: false, error: msg, elapsed_ms: elapsed });
   }
 }
