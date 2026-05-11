@@ -43,13 +43,22 @@ export default async function handler(req, res) {
   const url = `${BASE_URL}/orders?date=${today}`;
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'X-OrderBuddy-Client-Id': CLIENT_ID,
-        'X-OrderBuddy-API-Key': API_KEY,
-      },
-    });
-    const rawText = await response.text();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    let rawText;
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'X-OrderBuddy-Client-Id': CLIENT_ID,
+          'X-OrderBuddy-API-Key': API_KEY,
+        },
+      });
+      rawText = await response.text();
+    } finally {
+      clearTimeout(timeout);
+    }
 
     let orders = [];
     try {
@@ -66,6 +75,7 @@ export default async function handler(req, res) {
       orders,
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    const msg = err.name === 'AbortError' ? 'Foodticket API timeout' : err.message;
+    return res.status(500).json({ success: false, error: msg });
   }
 }
