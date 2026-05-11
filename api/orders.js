@@ -4,22 +4,6 @@ const CLIENT_ID = process.env.FOODTICKET_CLIENT_ID;
 const API_KEY = process.env.FOODTICKET_API_KEY;
 const BASE_URL = process.env.FOODTICKET_API_URL || 'https://api.foodticket.net/1';
 
-// Haal straatnamen op voor een batch van unieke postcodes via PDOK (1 request per postcode)
-async function lookupPostcodes(postcodes) {
-  const map = {};
-  await Promise.all(postcodes.map(async (pc) => {
-    const clean = pc.replace(/\s/g, '').toUpperCase();
-    try {
-      const url = `https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?fq=postcode:${clean}&rows=1&fl=straatnaam,woonplaatsnaam`;
-      const r = await fetch(url, { signal: AbortSignal.timeout(3000) });
-      const data = await r.json();
-      const doc = data?.response?.docs?.[0];
-      if (doc?.straatnaam) map[clean] = { street: doc.straatnaam, city: doc.woonplaatsnaam || '' };
-    } catch {}
-  }));
-  return map;
-}
-
 function xml(tag, str) {
   const m = str.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, 'i'));
   return m ? m[1].trim() : '';
@@ -45,7 +29,6 @@ function parseOrders(xmlStr) {
       zipcode,
       city,
       street_raw: street,
-      streetnumber_raw: streetnumber,
       delivery_type: xml('delivery_type', o) || xml('ordertype', o),
       total_price: xml('total_price', o) || xml('price', o) || xml('total', o),
       phone: xml('phone', o),
@@ -76,37 +59,11 @@ export default async function handler(req, res) {
       orders = parseOrders(rawText);
     }
 
-    // Unieke postcodes ophalen die gemaskeerd zijn
-    const maskedPcs = [...new Set(
-      orders
-        .filter(o => o.zipcode && (!o.street_raw || o.street_raw.includes('*')))
-        .map(o => o.zipcode.replace(/\s/g, '').toUpperCase())
-    )];
-
-    const pcMap = maskedPcs.length > 0 ? await lookupPostcodes(maskedPcs) : {};
-
-    const enriched = orders.map(o => {
-      const isMasked = !o.street_raw || o.street_raw.includes('*');
-      if (isMasked && o.zipcode) {
-        const clean = o.zipcode.replace(/\s/g, '').toUpperCase();
-        const pdok = pcMap[clean];
-        if (pdok) {
-          return {
-            ...o,
-            street: pdok.street,
-            city: pdok.city || o.city,
-            address: `${pdok.street}, ${o.zipcode} ${pdok.city || o.city}`,
-          };
-        }
-      }
-      return o;
-    });
-
     return res.status(200).json({
       success: true,
       date: today,
-      total_orders: enriched.length,
-      orders: enriched,
+      total_orders: orders.length,
+      orders,
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
