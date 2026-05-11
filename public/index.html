@@ -35,8 +35,9 @@
     .driver-chip .dorders { font-size: 0.7rem; color: #e53935; margin-top: 2px; }
     #driver-search { background: #2a2a2a; border: 1px solid #444; color: #f0f0f0; padding: 8px 12px; border-radius: 6px; width: 100%; max-width: 300px; margin-bottom: 12px; }
     #drivers-status { color: #888; font-size: 0.85rem; margin-bottom: 8px; }
-    .error { color: #ef5350; padding: 16px; }
-    .addr-loading { color: #666; font-style: italic; }
+    .error-box { background: #2a1a1a; border: 1px solid #e53935; border-radius: 8px; padding: 16px; color: #ef9a9a; }
+    .error-box button { margin-top: 10px; background: #e53935; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .loading { color: #888; padding: 16px; }
   </style>
 </head>
 <body>
@@ -60,7 +61,7 @@
   </div>
   <div class="section">
     <h2>📋 Orders</h2>
-    <div id="table-container"><p style="padding:16px;color:#888">Laden...</p></div>
+    <div id="table-container"><p class="loading">Laden...</p></div>
   </div>
 
   <script>
@@ -78,7 +79,7 @@
         const r = await fetch(`https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?fq=postcode:${pc}&rows=1&fl=straatnaam,woonplaatsnaam`);
         const d = await r.json();
         const doc = d?.response?.docs?.[0];
-        const result = doc?.straatnaam ? doc.straatnaam : null;
+        const result = doc?.straatnaam || null;
         pcCache[pc] = result;
         return result;
       } catch { pcCache[pc] = null; return null; }
@@ -120,15 +121,13 @@
     }
 
     function renderTable(orders) {
-      const container = document.getElementById('table-container');
-      if (!orders.length) { container.innerHTML = '<p style="padding:16px;color:#888">Geen orders.</p>'; return; }
-      let html = '<table><thead><tr><th>#Order</th><th>Status</th><th>Tijd</th><th>Geleden</th><th>Adres</th><th>Bedrag</th></tr></thead><tbody>';
+      if (!orders.length) return '<p class="loading">Geen orders vandaag.</p>';
+      let html = '<table><thead><tr><th>#</th><th>Status</th><th>Tijd</th><th>Geleden</th><th>Adres</th><th>Bedrag</th></tr></thead><tbody>';
       orders.forEach(o => {
-        const addr = o._street ? `${o._street}, ${o.zipcode} ${o.city}` : (o.address || o.zipcode || '-');
+        const addr = o._street ? `${o._street}, ${o.zipcode} ${o.city}` : (o.zipcode ? `${o.zipcode} ${o.city}` : '-');
         html += `<tr><td>${o.id||'-'}</td><td>${badge(o.status)}</td><td>${fmtTime(o.date)}</td><td>${timeAgo(o.date)}</td><td id="addr-${o.id}">${addr}</td><td>${fmtPrice(o.total_price)}</td></tr>`;
       });
-      html += '</tbody></table>';
-      container.innerHTML = html;
+      return html + '</tbody></table>';
     }
 
     async function enrichAddresses(orders) {
@@ -136,8 +135,7 @@
       const uniquePcs = [...new Set(masked.map(o => o.zipcode).filter(Boolean))];
       await Promise.all(uniquePcs.map(pc => getStraat(pc)));
       orders.forEach(o => {
-        const isMasked = !o.street_raw || o.street_raw.includes('*');
-        if (isMasked && o.zipcode) {
+        if ((!o.street_raw || o.street_raw.includes('*')) && o.zipcode) {
           const pc = o.zipcode.replace(/\s/g,'').toUpperCase();
           if (pcCache[pc]) {
             o._street = pcCache[pc];
@@ -149,13 +147,22 @@
     }
 
     let lastOrders = [];
+    let retryTimer = null;
 
     async function loadOrders() {
       const container = document.getElementById('table-container');
       try {
         const res = await fetch(ORDERS_API);
         const data = await res.json();
-        if (!data.success) { container.innerHTML = `<p class="error">Fout: ${data.error||'Onbekend'}</p>`; return; }
+        if (!data.success) {
+          const isTimeout = (data.error||'').includes('timeout');
+          container.innerHTML = `<div class="error-box">
+            <strong>⚠️ ${isTimeout ? 'Foodticket reageert traag, probeer opnieuw' : data.error}</strong>
+            <br><small>Wordt automatisch opnieuw geprobeerd...</small>
+            <br><button onclick="loadOrders()">Nu opnieuw proberen</button>
+          </div>`;
+          return;
+        }
         lastOrders = data.orders || [];
         document.getElementById('total_orders').textContent = data.total_orders || lastOrders.length;
         document.getElementById('date').textContent = (data.date||'').slice(5) || '-';
@@ -168,9 +175,11 @@
         document.getElementById('active').textContent = active;
         document.getElementById('delivered').textContent = delivered;
         document.getElementById('last-update').textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
-        renderTable(lastOrders);
+        container.innerHTML = renderTable(lastOrders);
         enrichAddresses(lastOrders);
-      } catch(e) { container.innerHTML = `<p class="error">Fout: ${e.message}</p>`; }
+      } catch(e) {
+        container.innerHTML = `<div class="error-box"><strong>⚠️ Verbindingsfout</strong><br><small>${e.message}</small><br><button onclick="loadOrders()">Opnieuw proberen</button></div>`;
+      }
     }
 
     function filterDrivers() {
@@ -200,14 +209,14 @@
           <div class="driver-chip" data-id="${d.id}" data-name="${(d.name||'').toLowerCase()}" onclick="toggleDriver('${d.id}')">
             <div class="dname">${d.name||d.login||'?'}</div>
             ${d.tel ? `<div class="dtel">📞 ${d.tel}</div>` : ''}
-            <div class="dorders">📦 ${d.orders||0} orders vandaag</div>
+            <div class="dorders">📦 ${d.orders||0} orders</div>
           </div>`).join('');
       } catch(e) { status.textContent = 'Fout laden bezorgers'; }
     }
 
     loadOrders();
     loadDrivers();
-    setInterval(loadOrders, 30000);
+    setInterval(loadOrders, 60000);
     setInterval(loadDrivers, 60000);
   </script>
 </body>
