@@ -4,8 +4,9 @@ const CLIENT_ID = process.env.FOODTICKET_CLIENT_ID;
 const API_KEY = process.env.FOODTICKET_API_KEY;
 const BASE_URL = process.env.FOODTICKET_API_URL || 'https://api.foodticket.net/1';
 
+// Strict tag match: <tag> or <tag > but NOT <tag_something>
 function xmlTag(tag, str) {
-  const m = str.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, 'i'));
+  const m = str.match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\/${tag}>`, 'i'));
   return m ? m[1].trim() : '';
 }
 
