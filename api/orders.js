@@ -11,16 +11,24 @@ function parseOrders(xmlStr) {
   const matches = [...xmlStr.matchAll(/<order[\s\S]*?<\/order>/gi)];
   return matches.map(m => {
     const o = m[0];
+    const street = xml('street', o);
+    const streetnumber = xml('streetnumber', o);
+    const zipcode = xml('zipcode', o);
+    const city = xml('city', o);
+    // Adres samenvoegen
+    const address = [street, streetnumber, zipcode, city].filter(Boolean).join(' ') || '';
+    // Datum parsen: formaat is "2026-05-11 17:41:13"
+    const rawDate = xml('date', o);
+    const isoDate = rawDate ? rawDate.replace(' ', 'T') : '';
     return {
       id: xml('id', o),
-      date: xml('date', o),
+      date: isoDate,
       status: xml('status', o) || xml('orderstatus', o),
       firstname: xml('firstname', o),
       lastname: xml('lastname', o),
-      street: xml('street', o),
-      streetnumber: xml('streetnumber', o),
-      zipcode: xml('zipcode', o),
-      city: xml('city', o),
+      address: address,
+      zipcode: zipcode,
+      city: city,
       delivery_type: xml('delivery_type', o) || xml('ordertype', o),
       total_price: xml('total_price', o) || xml('price', o) || xml('total', o),
       phone: xml('phone', o),
@@ -53,8 +61,6 @@ export default async function handler(req, res) {
     });
 
     const rawText = await response.text();
-
-    // Parse XML orders
     const orders = parseOrders(rawText);
     const total = rawText.match(/<total>(\d+)<\/total>/);
 
