@@ -25,7 +25,6 @@
     .badge-orange { background: #e65100; color: #fff; }
     .badge-blue { background: #0d47a1; color: #90caf9; }
     .badge-gray { background: #333; color: #aaa; }
-    /* Drivers section */
     .drivers-panel { background: #1e1e1e; border-radius: 10px; padding: 16px; }
     .drivers-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
     .driver-chip { background: #2a2a2a; border: 2px solid #333; border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: all 0.2s; user-select: none; }
@@ -37,6 +36,7 @@
     #driver-search { background: #2a2a2a; border: 1px solid #444; color: #f0f0f0; padding: 8px 12px; border-radius: 6px; width: 100%; max-width: 300px; margin-bottom: 12px; }
     #drivers-status { color: #888; font-size: 0.85rem; margin-bottom: 8px; }
     .error { color: #ef5350; padding: 16px; }
+    .addr-loading { color: #666; font-style: italic; }
   </style>
 </head>
 <body>
@@ -44,14 +44,12 @@
     <h1>🍕 PizzaETA Dashboard</h1>
     <span id="last-update">Laden...</span>
   </header>
-
   <div class="stats">
     <div class="stat-card"><div class="val" id="total_orders">-</div><div class="lbl">Totaal orders</div></div>
     <div class="stat-card"><div class="val" id="active">-</div><div class="lbl">Actief</div></div>
     <div class="stat-card"><div class="val" id="delivered">-</div><div class="lbl">Bezorgd</div></div>
     <div class="stat-card"><div class="val" id="date">-</div><div class="lbl">Datum</div></div>
   </div>
-
   <div class="section">
     <h2>🚴 Bezorgers</h2>
     <div class="drivers-panel">
@@ -60,7 +58,6 @@
       <div class="drivers-grid" id="drivers-grid"></div>
     </div>
   </div>
-
   <div class="section">
     <h2>📋 Orders</h2>
     <div id="table-container"><p style="padding:16px;color:#888">Laden...</p></div>
@@ -71,20 +68,35 @@
     const DRIVERS_API = '/api/deliverers';
     let allDrivers = [];
     let activeDrivers = new Set();
+    const pcCache = {};
+
+    async function getStraat(postcode) {
+      if (!postcode) return null;
+      const pc = postcode.replace(/\s/g,'').toUpperCase();
+      if (pcCache[pc] !== undefined) return pcCache[pc];
+      try {
+        const r = await fetch(`https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?fq=postcode:${pc}&rows=1&fl=straatnaam,woonplaatsnaam`);
+        const d = await r.json();
+        const doc = d?.response?.docs?.[0];
+        const result = doc?.straatnaam ? doc.straatnaam : null;
+        pcCache[pc] = result;
+        return result;
+      } catch { pcCache[pc] = null; return null; }
+    }
 
     function fmtTime(str) {
       if (!str) return '-';
       try {
-        const d = new Date(str.replace(' ', 'T'));
+        const d = new Date(str.replace(' ','T'));
         if (isNaN(d)) return str;
-        return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+        return d.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
       } catch { return str; }
     }
 
     function timeAgo(str) {
       if (!str) return '-';
       try {
-        const d = new Date(str.replace(' ', 'T'));
+        const d = new Date(str.replace(' ','T'));
         const mins = Math.floor((Date.now() - d) / 60000);
         if (mins < 1) return 'nu';
         if (mins < 60) return mins + ' min';
@@ -92,11 +104,11 @@
       } catch { return '-'; }
     }
 
-    function getStatusBadge(s) {
+    function badge(s) {
       const sl = (s||'').toLowerCase();
       if (sl.includes('deliver') || sl.includes('bezorg')) return `<span class="badge badge-green">${s}</span>`;
-      if (sl.includes('pending') || sl.includes('wacht')) return `<span class="badge badge-orange">${s}</span>`;
-      if (sl.includes('confirm') || sl.includes('accept')) return `<span class="badge badge-blue">${s}</span>`;
+      if (sl.includes('enroute') || sl.includes('onderweg')) return `<span class="badge badge-orange">${s}</span>`;
+      if (sl.includes('confirm') || sl.includes('accept') || sl.includes('init')) return `<span class="badge badge-blue">${s}</span>`;
       return `<span class="badge badge-gray">${s||'?'}</span>`;
     }
 
@@ -107,17 +119,48 @@
       return '€' + n.toFixed(2);
     }
 
+    function renderTable(orders) {
+      const container = document.getElementById('table-container');
+      if (!orders.length) { container.innerHTML = '<p style="padding:16px;color:#888">Geen orders.</p>'; return; }
+      let html = '<table><thead><tr><th>#Order</th><th>Status</th><th>Tijd</th><th>Geleden</th><th>Adres</th><th>Bedrag</th></tr></thead><tbody>';
+      orders.forEach(o => {
+        const addr = o._street ? `${o._street}, ${o.zipcode} ${o.city}` : (o.address || o.zipcode || '-');
+        html += `<tr><td>${o.id||'-'}</td><td>${badge(o.status)}</td><td>${fmtTime(o.date)}</td><td>${timeAgo(o.date)}</td><td id="addr-${o.id}">${addr}</td><td>${fmtPrice(o.total_price)}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    async function enrichAddresses(orders) {
+      const masked = orders.filter(o => !o.street_raw || o.street_raw.includes('*'));
+      const uniquePcs = [...new Set(masked.map(o => o.zipcode).filter(Boolean))];
+      await Promise.all(uniquePcs.map(pc => getStraat(pc)));
+      orders.forEach(o => {
+        const isMasked = !o.street_raw || o.street_raw.includes('*');
+        if (isMasked && o.zipcode) {
+          const pc = o.zipcode.replace(/\s/g,'').toUpperCase();
+          if (pcCache[pc]) {
+            o._street = pcCache[pc];
+            const cell = document.getElementById(`addr-${o.id}`);
+            if (cell) cell.textContent = `${pcCache[pc]}, ${o.zipcode} ${o.city}`;
+          }
+        }
+      });
+    }
+
+    let lastOrders = [];
+
     async function loadOrders() {
       const container = document.getElementById('table-container');
       try {
         const res = await fetch(ORDERS_API);
         const data = await res.json();
         if (!data.success) { container.innerHTML = `<p class="error">Fout: ${data.error||'Onbekend'}</p>`; return; }
-        const orders = data.orders || [];
-        document.getElementById('total_orders').textContent = data.total || orders.length;
-        document.getElementById('date').textContent = data.date || '-';
+        lastOrders = data.orders || [];
+        document.getElementById('total_orders').textContent = data.total_orders || lastOrders.length;
+        document.getElementById('date').textContent = (data.date||'').slice(5) || '-';
         let active = 0, delivered = 0;
-        orders.forEach(o => {
+        lastOrders.forEach(o => {
           const sl = (o.status||'').toLowerCase();
           if (sl.includes('deliver') || sl.includes('bezorg')) delivered++;
           else active++;
@@ -125,21 +168,16 @@
         document.getElementById('active').textContent = active;
         document.getElementById('delivered').textContent = delivered;
         document.getElementById('last-update').textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
-        if (!orders.length) { container.innerHTML = '<p style="padding:16px;color:#888">Geen orders.</p>'; return; }
-        let html = '<table><thead><tr><th>#Order</th><th>Status</th><th>Tijd</th><th>Geleden</th><th>Adres</th><th>Bedrag</th></tr></thead><tbody>';
-        orders.forEach(o => {
-          const addr = [o.street, o.housenumber, o.zipcode, o.city].filter(Boolean).join(' ') || o.address || '-';
-          html += `<tr><td>${o.id||'-'}</td><td>${getStatusBadge(o.status)}</td><td>${fmtTime(o.time||o.created_at||o.date)}</td><td>${timeAgo(o.time||o.created_at||o.date)}</td><td>${addr}</td><td>${fmtPrice(o.amount||o.total||o.price)}</td></tr>`;
-        });
-        html += '</tbody></table>';
-        container.innerHTML = html;
-      } catch(e) { container.innerHTML = `<p class="error">Netwerk fout: ${e.message}</p>`; }
+        renderTable(lastOrders);
+        enrichAddresses(lastOrders);
+      } catch(e) { container.innerHTML = `<p class="error">Fout: ${e.message}</p>`; }
     }
 
     function filterDrivers() {
       const q = document.getElementById('driver-search').value.toLowerCase();
-      const chips = document.querySelectorAll('.driver-chip');
-      chips.forEach(c => { c.style.display = c.dataset.name.includes(q) ? '' : 'none'; });
+      document.querySelectorAll('.driver-chip').forEach(c => {
+        c.style.display = c.dataset.name.includes(q) ? '' : 'none';
+      });
     }
 
     function toggleDriver(id) {
