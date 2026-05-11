@@ -6,286 +6,171 @@
   <title>🍕 PizzaETA Dashboard</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f0f0f;
-      color: #f0f0f0;
-      min-height: 100vh;
-    }
-    header {
-      background: #1a1a1a;
-      border-bottom: 3px solid #ff4500;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    header h1 { font-size: 1.6rem; color: #ff4500; }
-    header h1 span { color: #fff; }
-    .status-dot {
-      display: inline-block;
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #22c55e;
-      margin-right: 6px;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-    .live-badge {
-      font-size: 0.8rem;
-      background: #1f1f1f;
-      border: 1px solid #333;
-      padding: 4px 12px;
-      border-radius: 20px;
-      color: #aaa;
-    }
-    .stats {
-      display: flex;
-      gap: 16px;
-      padding: 20px 24px;
-      flex-wrap: wrap;
-    }
-    .stat-card {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 16px 24px;
-      flex: 1;
-      min-width: 140px;
-      text-align: center;
-    }
-    .stat-card .num {
-      font-size: 2.4rem;
-      font-weight: 700;
-      color: #ff4500;
-    }
-    .stat-card .label {
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 4px;
-    }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; min-height: 100vh; }
+    header { background: #1a1a1a; display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 2px solid #e53935; }
+    header h1 { font-size: 1.4rem; }
+    #last-update { font-size: 0.8rem; color: #888; }
+    .stats { display: flex; gap: 16px; padding: 16px 24px; flex-wrap: wrap; }
+    .stat-card { background: #1e1e1e; border-radius: 10px; padding: 14px 20px; flex: 1; min-width: 120px; text-align: center; }
+    .stat-card .val { font-size: 2rem; font-weight: bold; color: #e53935; }
+    .stat-card .lbl { font-size: 0.75rem; color: #aaa; margin-top: 4px; }
     .section { padding: 0 24px 24px; }
-    .section h2 {
-      font-size: 1rem;
-      color: #aaa;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .table-wrap { overflow-x: auto; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #1a1a1a;
-      border-radius: 12px;
-      overflow: hidden;
-      min-width: 700px;
-    }
-    thead tr { background: #222; }
-    th {
-      padding: 12px 14px;
-      text-align: left;
-      font-size: 0.75rem;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-    td {
-      padding: 11px 14px;
-      font-size: 0.88rem;
-      border-top: 1px solid #222;
-    }
-    tr:hover td { background: #1f1f1f; }
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .badge-new { background: #1e3a5f; color: #60a5fa; }
-    .badge-preparing { background: #3b2a00; color: #fbbf24; }
-    .badge-enroute { background: #2a1a3a; color: #c084fc; }
-    .badge-ready { background: #14532d; color: #4ade80; }
-    .badge-delivered { background: #1f1f1f; color: #888; }
-    .badge-other { background: #2a2a2a; color: #aaa; }
-    .address-cell { color: #ccc; font-size: 0.82rem; }
-    .price-cell { color: #ff4500; font-weight: 600; }
-    .time-cell { white-space: nowrap; color: #aaa; }
-    .loading {
-      text-align: center;
-      padding: 48px;
-      color: #555;
-    }
-    .error-box {
-      background: #2a0a0a;
-      border: 1px solid #7f1d1d;
-      border-radius: 8px;
-      padding: 16px;
-      color: #fca5a5;
-    }
-    .refresh-info {
-      font-size: 0.75rem;
-      color: #555;
-      padding: 0 24px 16px;
-    }
-    #countdown { color: #ff4500; font-weight: 600; }
+    .section h2 { margin-bottom: 12px; font-size: 1.1rem; color: #ccc; }
+    table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 10px; overflow: hidden; }
+    th { background: #2a2a2a; padding: 10px 12px; text-align: left; font-size: 0.75rem; color: #888; text-transform: uppercase; }
+    td { padding: 10px 12px; border-top: 1px solid #2a2a2a; font-size: 0.85rem; }
+    tr:hover td { background: #252525; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
+    .badge-green { background: #1b5e20; color: #69f0ae; }
+    .badge-orange { background: #e65100; color: #fff; }
+    .badge-blue { background: #0d47a1; color: #90caf9; }
+    .badge-gray { background: #333; color: #aaa; }
+    /* Drivers section */
+    .drivers-panel { background: #1e1e1e; border-radius: 10px; padding: 16px; }
+    .drivers-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .driver-chip { background: #2a2a2a; border: 2px solid #333; border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: all 0.2s; user-select: none; }
+    .driver-chip:hover { border-color: #e53935; }
+    .driver-chip.active { border-color: #e53935; background: #3a1a1a; }
+    .driver-chip .dname { font-weight: bold; font-size: 0.9rem; }
+    .driver-chip .dtel { font-size: 0.7rem; color: #888; margin-top: 2px; }
+    .driver-chip .dorders { font-size: 0.7rem; color: #e53935; margin-top: 2px; }
+    #driver-search { background: #2a2a2a; border: 1px solid #444; color: #f0f0f0; padding: 8px 12px; border-radius: 6px; width: 100%; max-width: 300px; margin-bottom: 12px; }
+    #drivers-status { color: #888; font-size: 0.85rem; margin-bottom: 8px; }
+    .error { color: #ef5350; padding: 16px; }
   </style>
 </head>
 <body>
+  <header>
+    <h1>🍕 PizzaETA Dashboard</h1>
+    <span id="last-update">Laden...</span>
+  </header>
 
-<header>
-  <h1>🍕 Pizza<span>ETA</span> Dashboard</h1>
-  <span class="live-badge"><span class="status-dot"></span>LIVE</span>
-</header>
-
-<div class="stats">
-  <div class="stat-card">
-    <div class="num" id="total">—</div>
-    <div class="label">Orders vandaag</div>
+  <div class="stats">
+    <div class="stat-card"><div class="val" id="total_orders">-</div><div class="lbl">Totaal orders</div></div>
+    <div class="stat-card"><div class="val" id="active">-</div><div class="lbl">Actief</div></div>
+    <div class="stat-card"><div class="val" id="delivered">-</div><div class="lbl">Bezorgd</div></div>
+    <div class="stat-card"><div class="val" id="date">-</div><div class="lbl">Datum</div></div>
   </div>
-  <div class="stat-card">
-    <div class="num" id="active">—</div>
-    <div class="label">Actief / bezig</div>
+
+  <div class="section">
+    <h2>🚴 Bezorgers</h2>
+    <div class="drivers-panel">
+      <input type="text" id="driver-search" placeholder="Zoek bezorger..." oninput="filterDrivers()" />
+      <div id="drivers-status">Laden...</div>
+      <div class="drivers-grid" id="drivers-grid"></div>
+    </div>
   </div>
-  <div class="stat-card">
-    <div class="num" id="delivered">—</div>
-    <div class="label">Bezorgd</div>
+
+  <div class="section">
+    <h2>📋 Orders</h2>
+    <div id="table-container"><p style="padding:16px;color:#888">Laden...</p></div>
   </div>
-  <div class="stat-card">
-    <div class="num" id="datum">—</div>
-    <div class="label">Datum</div>
-  </div>
-</div>
 
-<div class="refresh-info">Automatisch vernieuwen in <span id="countdown">30</span>s</div>
+  <script>
+    const ORDERS_API = '/api/orders';
+    const DRIVERS_API = '/api/deliverers';
+    let allDrivers = [];
+    let activeDrivers = new Set();
 
-<div class="section">
-  <h2>Live Orders</h2>
-  <div class="table-wrap">
-    <div id="table-container"><div class="loading">⏳ Orders laden...</div></div>
-  </div>
-</div>
-
-<script>
-  const API = '/api/orders';
-  let timer = 30;
-  let interval;
-
-  function statusBadge(s) {
-    const map = {
-      new:       ['badge-new',       'Nieuw'],
-      pending:   ['badge-new',       'Wacht'],
-      init:      ['badge-new',       'Nieuw'],
-      preparing: ['badge-preparing', 'Bezig'],
-      in_kitchen:['badge-preparing', 'Keuken'],
-      enroute:   ['badge-enroute',   'Onderweg'],
-      on_the_way:['badge-enroute',   'Onderweg'],
-      ready:     ['badge-ready',     'Klaar'],
-      delivered: ['badge-delivered', 'Bezorgd'],
-      completed: ['badge-delivered', 'Klaar'],
-    };
-    const key = (s || '').toLowerCase();
-    const [cls, label] = map[key] || ['badge-other', s || '?'];
-    return `<span class="badge ${cls}">${label}</span>`;
-  }
-
-  function formatTime(isoStr) {
-    if (!isoStr) return '—';
-    const d = new Date(isoStr);
-    if (isNaN(d)) return isoStr;
-    return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function minutesAgo(isoStr) {
-    if (!isoStr) return '—';
-    const d = new Date(isoStr);
-    if (isNaN(d)) return '—';
-    const diff = Math.round((Date.now() - d.getTime()) / 60000);
-    if (diff < 0) return '—';
-    if (diff === 0) return 'zojuist';
-    return `${diff} min`;
-  }
-
-  async function loadOrders() {
-    const container = document.getElementById('table-container');
-    try {
-      const res = await fetch(API);
-      const data = await res.json();
-
-      if (!data.success) {
-        container.innerHTML = `<div class="error-box">❌ ${data.error || 'Fout'}<br><small>${data.details || data.raw || ''}</small></div>`;
-        return;
-      }
-
-      const orders = data.orders || [];
-      document.getElementById('total').textContent = data.total_orders ?? orders.length;
-      document.getElementById('datum').textContent = data.date || '—';
-
-      const activeStatuses = ['init','new','pending','preparing','in_kitchen','enroute','on_the_way','ready'];
-      const active = orders.filter(o => activeStatuses.includes((o.status||'').toLowerCase())).length;
-      const done   = orders.filter(o => ['delivered','completed'].includes((o.status||'').toLowerCase())).length;
-      document.getElementById('active').textContent = active;
-      document.getElementById('delivered').textContent = done;
-
-      if (orders.length === 0) {
-        container.innerHTML = '<div class="loading">Geen orders gevonden voor vandaag.</div>';
-        return;
-      }
-
-      const rows = orders.map(o => {
-        const id      = o.id || '—';
-        const status  = o.status || '—';
-        const time    = formatTime(o.date);
-        const ago     = minutesAgo(o.date);
-        const address = o.address || '—';
-        const price   = o.total_price ? `€${parseFloat(o.total_price).toFixed(2)}` : '—';
-        return `<tr>
-          <td>#${id}</td>
-          <td>${statusBadge(status)}</td>
-          <td class="time-cell">${time}</td>
-          <td class="time-cell">${ago}</td>
-          <td class="address-cell">${address}</td>
-          <td class="price-cell">${price}</td>
-        </tr>`;
-      }).join('');
-
-      container.innerHTML = `
-        <table>
-          <thead><tr>
-            <th>#Order</th>
-            <th>Status</th>
-            <th>Tijd</th>
-            <th>Geleden</th>
-            <th>Adres</th>
-            <th>Bedrag</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>`;
-    } catch (e) {
-      container.innerHTML = `<div class="error-box">❌ Verbindingsfout: ${e.message}</div>`;
+    function fmtTime(str) {
+      if (!str) return '-';
+      try {
+        const d = new Date(str.replace(' ', 'T'));
+        if (isNaN(d)) return str;
+        return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+      } catch { return str; }
     }
-  }
 
-  function startCountdown() {
-    clearInterval(interval);
-    timer = 30;
-    interval = setInterval(() => {
-      timer--;
-      document.getElementById('countdown').textContent = timer;
-      if (timer <= 0) {
-        loadOrders();
-        timer = 30;
-      }
-    }, 1000);
-  }
+    function timeAgo(str) {
+      if (!str) return '-';
+      try {
+        const d = new Date(str.replace(' ', 'T'));
+        const mins = Math.floor((Date.now() - d) / 60000);
+        if (mins < 1) return 'nu';
+        if (mins < 60) return mins + ' min';
+        return Math.floor(mins/60) + 'u ' + (mins%60) + 'm';
+      } catch { return '-'; }
+    }
 
-  loadOrders();
-  startCountdown();
-</script>
+    function getStatusBadge(s) {
+      const sl = (s||'').toLowerCase();
+      if (sl.includes('deliver') || sl.includes('bezorg')) return `<span class="badge badge-green">${s}</span>`;
+      if (sl.includes('pending') || sl.includes('wacht')) return `<span class="badge badge-orange">${s}</span>`;
+      if (sl.includes('confirm') || sl.includes('accept')) return `<span class="badge badge-blue">${s}</span>`;
+      return `<span class="badge badge-gray">${s||'?'}</span>`;
+    }
+
+    function fmtPrice(v) {
+      if (!v && v !== 0) return '-';
+      const n = parseFloat(String(v).replace(',','.'));
+      if (isNaN(n)) return v;
+      return '€' + n.toFixed(2);
+    }
+
+    async function loadOrders() {
+      const container = document.getElementById('table-container');
+      try {
+        const res = await fetch(ORDERS_API);
+        const data = await res.json();
+        if (!data.success) { container.innerHTML = `<p class="error">Fout: ${data.error||'Onbekend'}</p>`; return; }
+        const orders = data.orders || [];
+        document.getElementById('total_orders').textContent = data.total || orders.length;
+        document.getElementById('date').textContent = data.date || '-';
+        let active = 0, delivered = 0;
+        orders.forEach(o => {
+          const sl = (o.status||'').toLowerCase();
+          if (sl.includes('deliver') || sl.includes('bezorg')) delivered++;
+          else active++;
+        });
+        document.getElementById('active').textContent = active;
+        document.getElementById('delivered').textContent = delivered;
+        document.getElementById('last-update').textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+        if (!orders.length) { container.innerHTML = '<p style="padding:16px;color:#888">Geen orders.</p>'; return; }
+        let html = '<table><thead><tr><th>#Order</th><th>Status</th><th>Tijd</th><th>Geleden</th><th>Adres</th><th>Bedrag</th></tr></thead><tbody>';
+        orders.forEach(o => {
+          const addr = [o.street, o.housenumber, o.zipcode, o.city].filter(Boolean).join(' ') || o.address || '-';
+          html += `<tr><td>${o.id||'-'}</td><td>${getStatusBadge(o.status)}</td><td>${fmtTime(o.time||o.created_at||o.date)}</td><td>${timeAgo(o.time||o.created_at||o.date)}</td><td>${addr}</td><td>${fmtPrice(o.amount||o.total||o.price)}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch(e) { container.innerHTML = `<p class="error">Netwerk fout: ${e.message}</p>`; }
+    }
+
+    function filterDrivers() {
+      const q = document.getElementById('driver-search').value.toLowerCase();
+      const chips = document.querySelectorAll('.driver-chip');
+      chips.forEach(c => { c.style.display = c.dataset.name.includes(q) ? '' : 'none'; });
+    }
+
+    function toggleDriver(id) {
+      if (activeDrivers.has(id)) activeDrivers.delete(id);
+      else activeDrivers.add(id);
+      document.querySelectorAll('.driver-chip').forEach(c => {
+        c.classList.toggle('active', activeDrivers.has(c.dataset.id));
+      });
+    }
+
+    async function loadDrivers() {
+      const grid = document.getElementById('drivers-grid');
+      const status = document.getElementById('drivers-status');
+      try {
+        const res = await fetch(DRIVERS_API);
+        const data = await res.json();
+        allDrivers = data.deliverers || [];
+        status.textContent = allDrivers.length + ' bezorgers beschikbaar';
+        grid.innerHTML = allDrivers.map(d => `
+          <div class="driver-chip" data-id="${d.id}" data-name="${(d.name||'').toLowerCase()}" onclick="toggleDriver('${d.id}')">
+            <div class="dname">${d.name||d.login||'?'}</div>
+            ${d.tel ? `<div class="dtel">📞 ${d.tel}</div>` : ''}
+            <div class="dorders">📦 ${d.orders||0} orders vandaag</div>
+          </div>`).join('');
+      } catch(e) { status.textContent = 'Fout laden bezorgers'; }
+    }
+
+    loadOrders();
+    loadDrivers();
+    setInterval(loadOrders, 30000);
+    setInterval(loadDrivers, 60000);
+  </script>
 </body>
 </html>
