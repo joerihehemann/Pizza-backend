@@ -75,25 +75,28 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
+    .table-wrap { overflow-x: auto; }
     table {
       width: 100%;
       border-collapse: collapse;
       background: #1a1a1a;
       border-radius: 12px;
       overflow: hidden;
+      min-width: 700px;
     }
     thead tr { background: #222; }
     th {
-      padding: 12px 16px;
+      padding: 12px 14px;
       text-align: left;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: #888;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
     td {
-      padding: 12px 16px;
-      font-size: 0.9rem;
+      padding: 11px 14px;
+      font-size: 0.88rem;
       border-top: 1px solid #222;
     }
     tr:hover td { background: #1f1f1f; }
@@ -106,23 +109,17 @@
     }
     .badge-new { background: #1e3a5f; color: #60a5fa; }
     .badge-preparing { background: #3b2a00; color: #fbbf24; }
+    .badge-enroute { background: #2a1a3a; color: #c084fc; }
     .badge-ready { background: #14532d; color: #4ade80; }
     .badge-delivered { background: #1f1f1f; color: #888; }
-    .badge-other { background: #2a1f2a; color: #c084fc; }
-    .eta-chip {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.82rem;
-      color: #ff4500;
-      font-weight: 600;
-    }
+    .badge-other { background: #2a2a2a; color: #aaa; }
+    .address-cell { color: #ccc; font-size: 0.82rem; }
+    .price-cell { color: #ff4500; font-weight: 600; }
+    .time-cell { white-space: nowrap; color: #aaa; }
     .loading {
       text-align: center;
       padding: 48px;
       color: #555;
-      font-size: 1rem;
     }
     .error-box {
       background: #2a0a0a;
@@ -130,7 +127,6 @@
       border-radius: 8px;
       padding: 16px;
       color: #fca5a5;
-      font-size: 0.9rem;
     }
     .refresh-info {
       font-size: 0.75rem;
@@ -170,7 +166,9 @@
 
 <div class="section">
   <h2>Live Orders</h2>
-  <div id="table-container"><div class="loading">⏳ Orders laden...</div></div>
+  <div class="table-wrap">
+    <div id="table-container"><div class="loading">⏳ Orders laden...</div></div>
+  </div>
 </div>
 
 <script>
@@ -180,29 +178,37 @@
 
   function statusBadge(s) {
     const map = {
-      new: ['badge-new', 'Nieuw'],
-      pending: ['badge-new', 'Wacht'],
+      new:       ['badge-new',       'Nieuw'],
+      pending:   ['badge-new',       'Wacht'],
+      init:      ['badge-new',       'Nieuw'],
       preparing: ['badge-preparing', 'Bezig'],
-      in_kitchen: ['badge-preparing', 'Keuken'],
-      ready: ['badge-ready', 'Klaar'],
+      in_kitchen:['badge-preparing', 'Keuken'],
+      enroute:   ['badge-enroute',   'Onderweg'],
+      on_the_way:['badge-enroute',   'Onderweg'],
+      ready:     ['badge-ready',     'Klaar'],
       delivered: ['badge-delivered', 'Bezorgd'],
       completed: ['badge-delivered', 'Klaar'],
     };
-    const [cls, label] = map[s?.toLowerCase()] || ['badge-other', s || '?'];
+    const key = (s || '').toLowerCase();
+    const [cls, label] = map[key] || ['badge-other', s || '?'];
     return `<span class="badge ${cls}">${label}</span>`;
   }
 
-  function etaMinutes(order) {
-    const created = order.created_at || order.date_added || order.time || null;
-    if (!created) return '—';
-    const diff = Math.round((Date.now() - new Date(created).getTime()) / 60000);
-    return diff >= 0 ? `${diff} min geleden` : '—';
+  function formatTime(isoStr) {
+    if (!isoStr) return '—';
+    const d = new Date(isoStr);
+    if (isNaN(d)) return isoStr;
+    return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
   }
 
-  function formatTime(str) {
-    if (!str) return '—';
-    const d = new Date(str);
-    return isNaN(d) ? str : d.toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'});
+  function minutesAgo(isoStr) {
+    if (!isoStr) return '—';
+    const d = new Date(isoStr);
+    if (isNaN(d)) return '—';
+    const diff = Math.round((Date.now() - d.getTime()) / 60000);
+    if (diff < 0) return '—';
+    if (diff === 0) return 'zojuist';
+    return `${diff} min`;
   }
 
   async function loadOrders() {
@@ -212,7 +218,7 @@
       const data = await res.json();
 
       if (!data.success) {
-        container.innerHTML = `<div class="error-box">❌ Fout: ${data.error || 'Onbekend'}<br><small>${data.details || ''}</small></div>`;
+        container.innerHTML = `<div class="error-box">❌ ${data.error || 'Fout'}<br><small>${data.details || data.raw || ''}</small></div>`;
         return;
       }
 
@@ -220,8 +226,9 @@
       document.getElementById('total').textContent = data.total_orders ?? orders.length;
       document.getElementById('datum').textContent = data.date || '—';
 
-      const active = orders.filter(o => !['delivered','completed'].includes((o.status||'').toLowerCase())).length;
-      const done = orders.filter(o => ['delivered','completed'].includes((o.status||'').toLowerCase())).length;
+      const activeStatuses = ['init','new','pending','preparing','in_kitchen','enroute','on_the_way','ready'];
+      const active = orders.filter(o => activeStatuses.includes((o.status||'').toLowerCase())).length;
+      const done   = orders.filter(o => ['delivered','completed'].includes((o.status||'').toLowerCase())).length;
       document.getElementById('active').textContent = active;
       document.getElementById('delivered').textContent = done;
 
@@ -231,28 +238,31 @@
       }
 
       const rows = orders.map(o => {
-        const id = o.id || o.order_id || o.number || '—';
-        const name = o.customer?.name || o.name || o.customer_name || '—';
-        const type = o.delivery_type || o.type || o.order_type || '—';
-        const status = o.status || '—';
-        const time = formatTime(o.created_at || o.date_added || o.time);
-        const eta = etaMinutes(o);
-        const total = o.total_price != null ? `€${parseFloat(o.total_price).toFixed(2)}` : (o.total != null ? `€${parseFloat(o.total).toFixed(2)}` : '—');
+        const id      = o.id || '—';
+        const status  = o.status || '—';
+        const time    = formatTime(o.date);
+        const ago     = minutesAgo(o.date);
+        const address = o.address || '—';
+        const price   = o.total_price ? `€${parseFloat(o.total_price).toFixed(2)}` : '—';
         return `<tr>
           <td>#${id}</td>
-          <td>${name}</td>
-          <td>${type}</td>
           <td>${statusBadge(status)}</td>
-          <td>${time}</td>
-          <td><span class="eta-chip">${eta}</span></td>
-          <td>${total}</td>
+          <td class="time-cell">${time}</td>
+          <td class="time-cell">${ago}</td>
+          <td class="address-cell">${address}</td>
+          <td class="price-cell">${price}</td>
         </tr>`;
       }).join('');
 
       container.innerHTML = `
         <table>
           <thead><tr>
-            <th>#</th><th>Naam</th><th>Type</th><th>Status</th><th>Tijd</th><th>Geleden</th><th>Bedrag</th>
+            <th>#Order</th>
+            <th>Status</th>
+            <th>Tijd</th>
+            <th>Geleden</th>
+            <th>Adres</th>
+            <th>Bedrag</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>`;
