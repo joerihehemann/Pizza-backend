@@ -40,7 +40,10 @@ export default async function handler(req, res) {
     });
     const rawText = await response.text();
 
-    // Try JSON first
+    if (req.query.debug) {
+      return res.status(200).json({ raw: rawText.slice(0, 2000) });
+    }
+
     let deliverers = [];
     try {
       const json = JSON.parse(rawText);
