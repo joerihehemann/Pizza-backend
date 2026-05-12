@@ -1,223 +1,222 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🍕 PizzaETA Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍕 PizzaETA Tracker</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; min-height: 100vh; }
-    header { background: #1a1a1a; display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 2px solid #e53935; }
-    header h1 { font-size: 1.4rem; }
-    #last-update { font-size: 0.8rem; color: #888; }
-    .stats { display: flex; gap: 16px; padding: 16px 24px; flex-wrap: wrap; }
-    .stat-card { background: #1e1e1e; border-radius: 10px; padding: 14px 20px; flex: 1; min-width: 120px; text-align: center; }
-    .stat-card .val { font-size: 2rem; font-weight: bold; color: #e53935; }
-    .stat-card .lbl { font-size: 0.75rem; color: #aaa; margin-top: 4px; }
-    .section { padding: 0 24px 24px; }
-    .section h2 { margin-bottom: 12px; font-size: 1.1rem; color: #ccc; }
-    table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 10px; overflow: hidden; }
-    th { background: #2a2a2a; padding: 10px 12px; text-align: left; font-size: 0.75rem; color: #888; text-transform: uppercase; }
-    td { padding: 10px 12px; border-top: 1px solid #2a2a2a; font-size: 0.85rem; }
-    tr:hover td { background: #252525; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
-    .badge-green { background: #1b5e20; color: #69f0ae; }
-    .badge-orange { background: #e65100; color: #fff; }
-    .badge-blue { background: #0d47a1; color: #90caf9; }
-    .badge-gray { background: #333; color: #aaa; }
-    .drivers-panel { background: #1e1e1e; border-radius: 10px; padding: 16px; }
-    .drivers-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-    .driver-chip { background: #2a2a2a; border: 2px solid #333; border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: all 0.2s; user-select: none; }
-    .driver-chip:hover { border-color: #e53935; }
-    .driver-chip.active { border-color: #e53935; background: #3a1a1a; }
-    .driver-chip .dname { font-weight: bold; font-size: 0.9rem; }
-    .driver-chip .dtel { font-size: 0.7rem; color: #888; margin-top: 2px; }
-    .driver-chip .dorders { font-size: 0.7rem; color: #e53935; margin-top: 2px; }
-    #driver-search { background: #2a2a2a; border: 1px solid #444; color: #f0f0f0; padding: 8px 12px; border-radius: 6px; width: 100%; max-width: 300px; margin-bottom: 12px; }
-    #drivers-status { color: #888; font-size: 0.85rem; margin-bottom: 8px; }
-    .error-box { background: #2a1a1a; border: 1px solid #e53935; border-radius: 8px; padding: 16px; color: #ef9a9a; }
-    .error-box button { margin-top: 10px; background: #e53935; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
-    .loading { color: #888; padding: 16px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #222;
+    }
+    h1 { font-size: 1.8rem; font-weight: 700; }
+    .last-update { font-size: 0.9rem; color: #888; }
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .column {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 20px;
+      min-height: 400px;
+    }
+    .column h2 {
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #333;
+    }
+    .column.delivering h2 { color: #ff6b35; }
+    .column.returning h2 { color: #4ecdc4; }
+    .driver-card {
+      background: #242424;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid #555;
+    }
+    .driver-card.delivering { border-left-color: #ff6b35; }
+    .driver-card.returning { border-left-color: #4ecdc4; }
+    .driver-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .driver-name .badge {
+      background: #ff6b35;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .driver-info {
+      display: grid;
+      gap: 6px;
+      font-size: 0.95rem;
+      color: #aaa;
+    }
+    .driver-info .row {
+      display: flex;
+      justify-content: space-between;
+    }
+    .driver-info .label { color: #777; }
+    .driver-info .value { color: #fff; font-weight: 500; }
+    .eta {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #333;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .eta.delivering { color: #ff6b35; }
+    .eta.returning { color: #4ecdc4; }
+    .no-data {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+      font-size: 1rem;
+    }
+    .loading {
+      text-align: center;
+      padding: 60px;
+      font-size: 1.1rem;
+      color: #888;
+    }
+    @media (max-width: 900px) {
+      .columns { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>🍕 PizzaETA Dashboard</h1>
-    <span id="last-update">Laden...</span>
+    <h1>🍕 PizzaETA Tracker</h1>
+    <div class="last-update" id="lastUpdate">Laden...</div>
   </header>
-  <div class="stats">
-    <div class="stat-card"><div class="val" id="total_orders">-</div><div class="lbl">Totaal orders</div></div>
-    <div class="stat-card"><div class="val" id="active">-</div><div class="lbl">Actief</div></div>
-    <div class="stat-card"><div class="val" id="delivered">-</div><div class="lbl">Bezorgd</div></div>
-    <div class="stat-card"><div class="val" id="date">-</div><div class="lbl">Datum</div></div>
-  </div>
-  <div class="section">
-    <h2>🚴 Bezorgers</h2>
-    <div class="drivers-panel">
-      <input type="text" id="driver-search" placeholder="Zoek bezorger..." oninput="filterDrivers()" />
-      <div id="drivers-status">Laden...</div>
-      <div class="drivers-grid" id="drivers-grid"></div>
+  <div class="columns">
+    <div class="column delivering">
+      <h2>🚗 Onderweg naar klant</h2>
+      <div id="delivering" class="loading">Bezorgers ophalen...</div>
+    </div>
+    <div class="column returning">
+      <h2>🏠 Op weg terug naar hub</h2>
+      <div id="returning" class="loading">Bezorgers ophalen...</div>
     </div>
   </div>
-  <div class="section">
-    <h2>📋 Orders</h2>
-    <div id="table-container"><p class="loading">Laden...</p></div>
-  </div>
-
   <script>
-    const ORDERS_API = '/api/orders';
-    const DRIVERS_API = '/api/deliverers';
-    let allDrivers = [];
-    let activeDrivers = new Set();
-    const pcCache = {};
+    const HUB_LAT = 51.4502; // Tilburg centrum
+    const HUB_LNG = 5.4792;
 
-    async function getStraat(postcode) {
-      if (!postcode) return null;
-      const pc = postcode.replace(/\s/g,'').toUpperCase();
-      if (pcCache[pc] !== undefined) return pcCache[pc];
+    function distance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function formatETA(seconds) {
+      if (!seconds || seconds <= 0) return 'Onbekend';
+      const min = Math.round(seconds / 60);
+      return min + ' min';
+    }
+
+    function renderDriver(d, orders) {
+      const isDelivering = d.status === 'delivering';
+      const orderList = orders.filter(o => o.deliverer === d.id);
+      
+      let etaHTML = '';
+      if (isDelivering && orderList.length > 0) {
+        const order = orderList[0];
+        etaHTML = `<div class="eta delivering">ETA: ${formatETA(d.avg_n)}</div>`;
+      } else if (!isDelivering && d.coord) {
+        const distToHub = d.lat ? distance(d.lat, d.lng, HUB_LAT, HUB_LNG) : 0;
+        const etaSeconds = distToHub > 0 ? (distToHub / 30) * 3600 : d.avg_n;
+        etaHTML = `<div class="eta returning">ETA naar hub: ${formatETA(etaSeconds)}</div>`;
+      }
+
+      return `
+        <div class="driver-card ${d.status}">
+          <div class="driver-name">
+            ${d.name}
+            ${d.orders > 0 ? `<span class="badge">${d.orders} order${d.orders > 1 ? 's' : ''}</span>` : ''}
+          </div>
+          <div class="driver-info">
+            ${d.tel ? `<div class="row"><span class="label">Tel:</span><span class="value">${d.tel}</span></div>` : ''}
+            ${isDelivering && orderList.length > 0 ? `<div class="row"><span class="label">Adres:</span><span class="value">${orderList[0].address || 'Onbekend'}</span></div>` : ''}
+            ${d.coord ? `<div class="row"><span class="label">GPS:</span><span class="value">Actief</span></div>` : ''}
+          </div>
+          ${etaHTML}
+        </div>
+      `;
+    }
+
+    async function load() {
       try {
-        const r = await fetch(`https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?fq=postcode:${pc}&rows=1&fl=straatnaam,woonplaatsnaam`);
-        const d = await r.json();
-        const doc = d?.response?.docs?.[0];
-        const result = doc?.straatnaam || null;
-        pcCache[pc] = result;
-        return result;
-      } catch { pcCache[pc] = null; return null; }
-    }
+        const [deliverersRes, ordersRes] = await Promise.all([
+          fetch('/api/deliverers'),
+          fetch('/api/orders')
+        ]);
+        const deliverersData = await deliverersRes.json();
+        const ordersData = await ordersRes.json();
 
-    function fmtTime(str) {
-      if (!str) return '-';
-      try {
-        const d = new Date(str.replace(' ','T'));
-        if (isNaN(d)) return str;
-        return d.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
-      } catch { return str; }
-    }
+        const deliverers = deliverersData.deliverers || [];
+        const orders = ordersData.orders || [];
 
-    function timeAgo(str) {
-      if (!str) return '-';
-      try {
-        const d = new Date(str.replace(' ','T'));
-        const mins = Math.floor((Date.now() - d) / 60000);
-        if (mins < 1) return 'nu';
-        if (mins < 60) return mins + ' min';
-        return Math.floor(mins/60) + 'u ' + (mins%60) + 'm';
-      } catch { return '-'; }
-    }
+        const delivering = deliverers.filter(d => d.status === 'delivering' && d.coord);
+        const returning = deliverers.filter(d => d.status === 'returning' && d.coord);
 
-    function badge(s) {
-      const sl = (s||'').toLowerCase();
-      if (sl.includes('deliver') || sl.includes('bezorg')) return `<span class="badge badge-green">${s}</span>`;
-      if (sl.includes('enroute') || sl.includes('onderweg')) return `<span class="badge badge-orange">${s}</span>`;
-      if (sl.includes('confirm') || sl.includes('accept') || sl.includes('init')) return `<span class="badge badge-blue">${s}</span>`;
-      return `<span class="badge badge-gray">${s||'?'}</span>`;
-    }
+        const deliveringEl = document.getElementById('delivering');
+        const returningEl = document.getElementById('returning');
 
-    function fmtPrice(v) {
-      if (!v && v !== 0) return '-';
-      const n = parseFloat(String(v).replace(',','.'));
-      if (isNaN(n)) return v;
-      return '€' + n.toFixed(2);
-    }
-
-    function renderTable(orders) {
-      if (!orders.length) return '<p class="loading">Geen orders vandaag.</p>';
-      let html = '<table><thead><tr><th>#</th><th>Status</th><th>Tijd</th><th>Geleden</th><th>Adres</th><th>Bedrag</th></tr></thead><tbody>';
-      orders.forEach(o => {
-        const addr = o._street ? `${o._street}, ${o.zipcode} ${o.city}` : (o.zipcode ? `${o.zipcode} ${o.city}` : '-');
-        html += `<tr><td>${o.id||'-'}</td><td>${badge(o.status)}</td><td>${fmtTime(o.date)}</td><td>${timeAgo(o.date)}</td><td id="addr-${o.id}">${addr}</td><td>${fmtPrice(o.total_price)}</td></tr>`;
-      });
-      return html + '</tbody></table>';
-    }
-
-    async function enrichAddresses(orders) {
-      const masked = orders.filter(o => !o.street_raw || o.street_raw.includes('*'));
-      const uniquePcs = [...new Set(masked.map(o => o.zipcode).filter(Boolean))];
-      await Promise.all(uniquePcs.map(pc => getStraat(pc)));
-      orders.forEach(o => {
-        if ((!o.street_raw || o.street_raw.includes('*')) && o.zipcode) {
-          const pc = o.zipcode.replace(/\s/g,'').toUpperCase();
-          if (pcCache[pc]) {
-            o._street = pcCache[pc];
-            const cell = document.getElementById(`addr-${o.id}`);
-            if (cell) cell.textContent = `${pcCache[pc]}, ${o.zipcode} ${o.city}`;
-          }
+        if (delivering.length === 0) {
+          deliveringEl.innerHTML = '<div class="no-data">Geen bezorgers onderweg naar klanten</div>';
+        } else {
+          deliveringEl.innerHTML = delivering.map(d => renderDriver(d, orders)).join('');
         }
-      });
-    }
 
-    let lastOrders = [];
-    let retryTimer = null;
-
-    async function loadOrders() {
-      const container = document.getElementById('table-container');
-      try {
-        const res = await fetch(ORDERS_API);
-        const data = await res.json();
-        if (!data.success) {
-          const isTimeout = (data.error||'').includes('timeout');
-          container.innerHTML = `<div class="error-box">
-            <strong>⚠️ ${isTimeout ? 'Foodticket reageert traag, probeer opnieuw' : data.error}</strong>
-            <br><small>Wordt automatisch opnieuw geprobeerd...</small>
-            <br><button onclick="loadOrders()">Nu opnieuw proberen</button>
-          </div>`;
-          return;
+        if (returning.length === 0) {
+          returningEl.innerHTML = '<div class="no-data">Geen bezorgers op weg terug</div>';
+        } else {
+          returningEl.innerHTML = returning.map(d => renderDriver(d, orders)).join('');
         }
-        lastOrders = data.orders || [];
-        document.getElementById('total_orders').textContent = data.total_orders || lastOrders.length;
-        document.getElementById('date').textContent = (data.date||'').slice(5) || '-';
-        let active = 0, delivered = 0;
-        lastOrders.forEach(o => {
-          const sl = (o.status||'').toLowerCase();
-          if (sl.includes('deliver') || sl.includes('bezorg')) delivered++;
-          else active++;
-        });
-        document.getElementById('active').textContent = active;
-        document.getElementById('delivered').textContent = delivered;
-        document.getElementById('last-update').textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
-        container.innerHTML = renderTable(lastOrders);
-        enrichAddresses(lastOrders);
-      } catch(e) {
-        container.innerHTML = `<div class="error-box"><strong>⚠️ Verbindingsfout</strong><br><small>${e.message}</small><br><button onclick="loadOrders()">Opnieuw proberen</button></div>`;
+
+        const now = new Date();
+        document.getElementById('lastUpdate').textContent = 
+          `Bijgewerkt: ${now.toLocaleTimeString('nl-NL')}`;
+      } catch (err) {
+        console.error(err);
+        document.getElementById('delivering').innerHTML = 
+          '<div class="no-data">Fout bij laden</div>';
+        document.getElementById('returning').innerHTML = 
+          '<div class="no-data">Fout bij laden</div>';
       }
     }
 
-    function filterDrivers() {
-      const q = document.getElementById('driver-search').value.toLowerCase();
-      document.querySelectorAll('.driver-chip').forEach(c => {
-        c.style.display = c.dataset.name.includes(q) ? '' : 'none';
-      });
-    }
-
-    function toggleDriver(id) {
-      if (activeDrivers.has(id)) activeDrivers.delete(id);
-      else activeDrivers.add(id);
-      document.querySelectorAll('.driver-chip').forEach(c => {
-        c.classList.toggle('active', activeDrivers.has(c.dataset.id));
-      });
-    }
-
-    async function loadDrivers() {
-      const grid = document.getElementById('drivers-grid');
-      const status = document.getElementById('drivers-status');
-      try {
-        const res = await fetch(DRIVERS_API);
-        const data = await res.json();
-        allDrivers = data.deliverers || [];
-        status.textContent = allDrivers.length + ' bezorgers beschikbaar';
-        grid.innerHTML = allDrivers.map(d => `
-          <div class="driver-chip" data-id="${d.id}" data-name="${(d.name||'').toLowerCase()}" onclick="toggleDriver('${d.id}')">
-            <div class="dname">${d.name||d.login||'?'}</div>
-            ${d.tel ? `<div class="dtel">📞 ${d.tel}</div>` : ''}
-            <div class="dorders">📦 ${d.orders||0} orders</div>
-          </div>`).join('');
-      } catch(e) { status.textContent = 'Fout laden bezorgers'; }
-    }
-
-    loadOrders();
-    loadDrivers();
-    setInterval(loadOrders, 60000);
-    setInterval(loadDrivers, 60000);
+    load();
+    setInterval(load, 15000);
   </script>
 </body>
 </html>
