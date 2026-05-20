@@ -237,6 +237,10 @@ header {
     <div class="pill" id="lastUpdate">Laden...</div>
   </div>
 </header>
+  <details style="margin: 20px 0; padding: 20px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333;">
+  <summary style="cursor: pointer; font-weight: 600; color: #ff6b35;">🔍 DEBUG INFO (klik om te openen)</summary>
+  <pre id="debugOutput" style="margin-top: 16px; padding: 16px; background: #0f0f0f; border-radius: 8px; font-size: 0.85rem; overflow-x: auto; color: #4ecdc4;">Loading debug data...</pre>
+</details>
 <div class="columns">
   <div class="column delivering">
     <h2>🚗 Onderweg naar klant <span class="count" id="deliveringCount">0</span></h2>
@@ -410,6 +414,34 @@ function renderLists(deliverers, orders, changedIds = new Set()) {
     ? delivering.map(d => renderDriver(d, d.orderList, changedIds)).join('')
     : '<div class="no-data">Geen bezorgers onderweg naar klanten</div>';
   returningEl.innerHTML = returning.length
+
+      // DEBUG OUTPUT
+  const debugEl = document.getElementById('debugOutput');
+  if (debugEl) {
+    const debugData = {
+      delivering: delivering.map(d => ({
+        id: d.id,
+        name: d.name,
+        orders: d.orders,
+        status: d.uiStatus,
+        coord: d.coord,
+        lat: d.lat,
+        lng: d.lng,
+        hasGps: Boolean(d.coord && Number.isFinite(d.lat) && Number.isFinite(d.lng))
+      })),
+      returning: returning.map(d => ({
+        id: d.id,
+        name: d.name,
+        orders: d.orders,
+        status: d.uiStatus,
+        coord: d.coord,
+        lat: d.lat,
+        lng: d.lng,
+        hasGps: Boolean(d.coord && Number.isFinite(d.lat) && Number.isFinite(d.lng))
+      }))
+    };
+    debugEl.textContent = JSON.stringify(debugData, null, 2);
+  }
     ? returning.map(d => renderDriver(d, d.orderList, changedIds)).join('')
     : '<div class="no-data">Geen bezorgers op weg terug of standby</div>';
   if (changedIds.size > 0) {
