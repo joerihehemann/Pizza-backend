@@ -7,442 +7,506 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
---bg: #0f0f0f;
---panel: #1a1a1a;
---card: #242424;
---card-2: #2b2b2b;
---text: #f0f0f0;
---muted: #9a9a9a;
---soft: #666;
---line: #2f2f2f;
---orange: #ff6b35;
---teal: #4ecdc4;
---red: #ff5d73;
---yellow: #f6c453;
+  --bg: #0f0f0f;
+  --panel: #1a1a1a;
+  --card: #242424;
+  --card-2: #2b2b2b;
+  --text: #f0f0f0;
+  --muted: #9a9a9a;
+  --soft: #666;
+  --line: #2f2f2f;
+  --orange: #ff6b35;
+  --teal: #4ecdc4;
+  --red: #ff5d73;
+  --yellow: #f6c453;
+  --green: #4caf50;
 }
 body {
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-background: var(--bg);
-color: var(--text);
-min-height: 100vh;
-padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 20px;
 }
 header {
-display: flex;
-justify-content: space-between;
-align-items: flex-end;
-gap: 16px;
-margin-bottom: 24px;
-padding-bottom: 16px;
-border-bottom: 2px solid #222;
-flex-wrap: wrap;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #222;
+  flex-wrap: wrap;
 }
-.headline h1 {
-font-size: 1.8rem;
-font-weight: 700;
-}
-.headline p {
-margin-top: 6px;
-color: var(--muted);
-font-size: 0.95rem;
-}
+.headline h1 { font-size: 1.8rem; font-weight: 700; }
+.headline p { margin-top: 6px; color: var(--muted); font-size: 0.95rem; }
 .meta {
-display: flex;
-gap: 12px;
-align-items: center;
-flex-wrap: wrap;
-justify-content: flex-end;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .pill {
-background: #181818;
-border: 1px solid var(--line);
-border-radius: 999px;
-padding: 8px 12px;
-font-size: 0.9rem;
-color: var(--muted);
+  background: #181818;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.pill strong {
-color: var(--text);
+.pill strong { color: var(--text); }
+.live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--soft);
+  transition: all 0.3s;
+}
+.live-dot.connected {
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+.live-dot.error { background: var(--red); }
+.live-dot.reconnecting {
+  background: var(--yellow);
+  animation: pulse 0.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 .columns {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 24px;
-max-width: 1600px;
-margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 .column {
-background: var(--panel);
-border-radius: 12px;
-padding: 20px;
-min-height: 420px;
-border: 1px solid rgba(255,255,255,0.04);
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 420px;
+  border: 1px solid rgba(255,255,255,0.04);
 }
 .column h2 {
-font-size: 1.25rem;
-margin-bottom: 16px;
-padding-bottom: 12px;
-border-bottom: 2px solid #333;
-display: flex;
-justify-content: space-between;
-align-items: center;
-gap: 12px;
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 .column h2 .count {
-font-size: 0.9rem;
-color: var(--muted);
-font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 500;
 }
 .column.delivering h2 { color: var(--orange); }
 .column.returning h2 { color: var(--teal); }
 .driver-list {
-min-height: 240px;
-transition: opacity 180ms ease;
+  min-height: 240px;
+  transition: opacity 180ms ease;
 }
 .driver-card {
-background: var(--card);
-border-radius: 10px;
-padding: 16px;
-margin-bottom: 12px;
-border-left: 4px solid #555;
-border: 1px solid rgba(255,255,255,0.05);
-transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  background: var(--card);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-left: 4px solid #555;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 .driver-card.changed {
-background: var(--card-2);
-transform: scale(1.01);
+  background: var(--card-2);
+  transform: scale(1.01);
+  animation: flash 1s ease-out;
+}
+@keyframes flash {
+  0% { background: #3a3a10; }
+  100% { background: var(--card-2); }
 }
 .driver-card.delivering { border-left-color: var(--orange); }
 .driver-card.returning { border-left-color: var(--teal); }
 .driver-card.idle { border-left-color: var(--yellow); }
 .driver-card.offline { border-left-color: var(--red); }
 .driver-head {
-display: flex;
-justify-content: space-between;
-align-items: center;
-gap: 12px;
-margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 .driver-name {
-font-size: 1.08rem;
-font-weight: 600;
-display: flex;
-align-items: center;
-gap: 8px;
-flex-wrap: wrap;
+  font-size: 1.08rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .badge {
-color: white;
-padding: 2px 8px;
-border-radius: 999px;
-font-size: 0.75rem;
-font-weight: 700;
-letter-spacing: 0.01em;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 .badge.orders { background: var(--orange); }
 .badge.status-returning { background: var(--teal); }
 .badge.status-idle { background: var(--yellow); color: #171717; }
 .badge.status-offline { background: var(--red); }
 .driver-info {
-display: grid;
-gap: 7px;
-font-size: 0.95rem;
-color: #aaa;
+  display: grid;
+  gap: 7px;
+  font-size: 0.95rem;
+  color: #aaa;
 }
 .row {
-display: flex;
-justify-content: space-between;
-gap: 12px;
-align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
 }
-.label {
-color: #777;
-flex: 0 0 auto;
-}
+.label { color: #777; flex: 0 0 auto; }
 .value {
-color: #fff;
-font-weight: 500;
-text-align: right;
-word-break: break-word;
+  color: #fff;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-word;
 }
 .eta {
-margin-top: 12px;
-padding-top: 10px;
-border-top: 1px solid #333;
-font-size: 1rem;
-font-weight: 700;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #333;
+  font-size: 1rem;
+  font-weight: 700;
 }
 .eta.delivering { color: var(--orange); }
 .eta.returning { color: var(--teal); }
 .eta.idle { color: var(--yellow); }
 .status-dot {
-width: 10px;
-height: 10px;
-border-radius: 50%;
-display: inline-block;
-flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: 0 0 auto;
 }
 .status-dot.delivering { background: var(--orange); }
 .status-dot.returning { background: var(--teal); }
 .status-dot.idle { background: var(--yellow); }
 .status-dot.offline { background: var(--red); }
-.no-data,
-.loading {
-text-align: center;
-padding: 46px 20px;
-color: var(--soft);
-font-size: 1rem;
-background: rgba(255,255,255,0.02);
-border: 1px dashed rgba(255,255,255,0.07);
-border-radius: 10px;
+.no-data, .loading {
+  text-align: center;
+  padding: 46px 20px;
+  color: var(--soft);
+  font-size: 1rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed rgba(255,255,255,0.07);
+  border-radius: 10px;
 }
 .error { color: #ff9aa9; }
 @media (max-width: 900px) {
-.columns { grid-template-columns: 1fr; }
-.row { flex-direction: column; }
-.value { text-align: left; }
+  .columns { grid-template-columns: 1fr; }
+  .row { flex-direction: column; }
+  .value { text-align: left; }
 }
 </style>
 </head>
 <body>
 <header>
-<div class="headline">
-<h1>🍕 PizzaETA Tracker</h1>
-<p>Live overzicht van bezorgers, ritten en terugritten.</p>
-</div>
-<div class="meta">
-<div class="pill">Refresh: <strong>5s</strong></div>
-<div class="pill" id="driverCount">Bezorgers: <strong>0</strong></div>
-<div class="pill" id="orderCount">Orders: <strong>0</strong></div>
-<div class="pill" id="lastUpdate">Laden...</div>
-</div>
+  <div class="headline">
+    <h1>🍕 PizzaETA Tracker</h1>
+    <p>Live overzicht van bezorgers, ritten en terugritten.</p>
+  </div>
+  <div class="meta">
+    <div class="pill">
+      <span class="live-dot" id="liveDot"></span>
+      <span id="statusText">Verbinden...</span>
+    </div>
+    <div class="pill" id="driverCount">Bezorgers: <strong>0</strong></div>
+    <div class="pill" id="orderCount">Orders: <strong>0</strong></div>
+    <div class="pill" id="lastUpdate">Laden...</div>
+  </div>
 </header>
 <div class="columns">
-<section class="column delivering">
-<h2>
-<span>🚗 Onderweg naar klant</span>
-<span class="count" id="deliveringCount">0</span>
-</h2>
-<div id="delivering" class="driver-list loading">Bezorgers ophalen...</div>
-</section>
-<section class="column returning">
-<h2>
-<span>🏠 Op weg terug / standby</span>
-<span class="count" id="returningCount">0</span>
-</h2>
-<div id="returning" class="driver-list loading">Bezorgers ophalen...</div>
-</section>
+  <div class="column delivering">
+    <h2>🚗 Onderweg naar klant <span class="count" id="deliveringCount">0</span></h2>
+    <div class="driver-list" id="delivering"><div class="loading">Bezorgers ophalen...</div></div>
+  </div>
+  <div class="column returning">
+    <h2>🏠 Op weg terug / standby <span class="count" id="returningCount">0</span></h2>
+    <div class="driver-list" id="returning"><div class="loading">Bezorgers ophalen...</div></div>
+  </div>
 </div>
 <script>
 const HUB_LAT = 51.5555;
 const HUB_LNG = 5.0913;
-const REFRESH_MS = 5000;
+let sseSource = null;
+let reconnectTimer = null;
 const state = {
-deliverersById: new Map(),
-orders: [],
-firstLoadDone: false
+  deliverersById: new Map(),
+  orders: [],
+  firstLoadDone: false
 };
+
 function distanceKm(lat1, lon1, lat2, lon2) {
-const R = 6371;
-const dLat = (lat2 - lat1) * Math.PI / 180;
-const dLon = (lon2 - lon1) * Math.PI / 180;
-const a =
-Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-Math.sin(dLon / 2) * Math.sin(dLon / 2);
-const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-return R * c;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+
 function formatETA(seconds) {
-if (!Number.isFinite(seconds) || seconds <= 0) return 'Onbekend';
-const min = Math.max(1, Math.round(seconds / 60));
-return ${min} min;
+  if (!Number.isFinite(seconds) || seconds <= 0) return 'Onbekend';
+  const min = Math.max(1, Math.round(seconds / 60));
+  return `${min} min`;
 }
+
 function safeNumber(value) {
-const n = Number(value);
-return Number.isFinite(n) ? n : 0;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 }
+
 function parseDate(value) {
-if (!value) return null;
-const parsed = new Date(value);
-return Number.isNaN(parsed.getTime()) ? null : parsed;
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
+
 function minutesAgo(value) {
-const d = parseDate(value);
-if (!d) return null;
-return Math.max(0, Math.round((Date.now() - d.getTime()) / 60000));
+  const d = parseDate(value);
+  if (!d) return null;
+  return Math.max(0, Math.round((Date.now() - d.getTime()) / 60000));
 }
+
 function normalizeText(value) {
-return String(value || '')
-.trim()
-.toLowerCase()
-.replace(/\s+/g, ' ');
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
+
 function getDelivererKeys(d) {
-const keys = new Set();
-if (d.id) keys.add(normalizeText(d.id));
-if (d.name) keys.add(normalizeText(d.name));
-if (d.firstname) keys.add(normalizeText(d.firstname));
-return [...keys].filter(Boolean);
+  const keys = new Set();
+  if (d.id) keys.add(normalizeText(d.id));
+  if (d.name) keys.add(normalizeText(d.name));
+  if (d.firstname) keys.add(normalizeText(d.firstname));
+  return [...keys].filter(Boolean);
 }
+
 function buildOrdersIndex(orders) {
-const map = new Map();
-orders.forEach(order => {
-const candidates = [
-order.deliverer,
-order.deliverer_id,
-order.driver,
-order.driver_id
-]
-.map(normalizeText)
-.filter(Boolean);
-candidates.forEach(key => {
-if (!map.has(key)) map.set(key, []);
-map.get(key).push(order);
-});
-});
-return map;
+  const map = new Map();
+  orders.forEach(order => {
+    const candidates = [
+      order.deliverer,
+      order.deliverer_id,
+      order.driver,
+      order.driver_id
+    ].map(normalizeText).filter(Boolean);
+    candidates.forEach(key => {
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(order);
+    });
+  });
+  return map;
 }
+
 function getOrdersForDeliverer(deliverer, index) {
-const found = new Map();
-getDelivererKeys(deliverer).forEach(key => {
-const items = index.get(key) || [];
-items.forEach(order => found.set(order.id || JSON.stringify(order), order));
-});
-return [...found.values()];
+  const found = new Map();
+  getDelivererKeys(deliverer).forEach(key => {
+    const items = index.get(key) || [];
+    items.forEach(order => found.set(order.id || JSON.stringify(order), order));
+  });
+  return [...found.values()];
 }
+
 function deriveUiStatus(d, orderList) {
-const hasGps = Boolean(d.coord && Number.isFinite(d.lat) && Number.isFinite(d.lng));
-const orders = safeNumber(d.orders);
-const age = minutesAgo(d.date_update || d.last_login);
-if (age !== null && age > 45) return 'offline';
-if (orders > 0 && hasGps) return 'delivering';
-if (hasGps) return 'returning';
-if (orders > 0 && !hasGps) return 'idle';
-return d.status || 'idle';
+  const hasGps = Boolean(d.coord && Number.isFinite(d.lat) && Number.isFinite(d.lng));
+  const orders = safeNumber(d.orders);
+  const age = minutesAgo(d.date_update || d.last_login);
+  if (age !== null && age > 45) return 'offline';
+  if (orders > 0 && hasGps) return 'delivering';
+  if (hasGps) return 'returning';
+  if (orders > 0 && !hasGps) return 'idle';
+  return d.status || 'idle';
 }
+
 function statusLabel(status) {
-if (status === 'delivering') return 'Onderweg';
-if (status === 'returning') return 'Terug / standby';
-if (status === 'offline') return 'Offline';
-return 'Geen GPS';
+  if (status === 'delivering') return 'Onderweg';
+  if (status === 'returning') return 'Terug / standby';
+  if (status === 'offline') return 'Offline';
+  return 'Geen GPS';
 }
+
 function renderDriver(d, orderList, changedIds) {
-const status = deriveUiStatus(d, orderList);
-const firstOrder = orderList || null;
-const hasGps = Boolean(d.coord && Number.isFinite(d.lat) && Number.isFinite(d.lng));
-const avgSeconds = safeNumber(d.avg_n) || (safeNumber(d.avg_interval) * 60);
-const updateAge = minutesAgo(d.date_update || d.last_login);
-let etaHTML = '';
-if (status === 'delivering') {
-etaHTML = <div class="eta delivering">ETA klant: ${formatETA(avgSeconds)}</div>;
-} else if (status === 'returning' && hasGps) {
-const distToHub = distanceKm(d.lat, d.lng, HUB_LAT, HUB_LNG);
-const etaSeconds = distToHub > 0 ? (distToHub / 30) * 3600 : avgSeconds;
-etaHTML = <div class="eta returning">ETA hub: ${formatETA(etaSeconds)}</div>;
-} else if (status === 'idle') {
-etaHTML = <div class="eta idle">Wacht op GPS of nieuwe rit</div>;
+  const status = deriveUiStatus(d, orderList);
+  const firstOrder = orderList[0] || null;
+  const hasGps = Boolean(d.coord && Number.isFinite(d.lat) && Number.isFinite(d.lng));
+  const avgSeconds = safeNumber(d.avg_n) || (safeNumber(d.avg_interval) * 60);
+  const updateAge = minutesAgo(d.date_update || d.last_login);
+  let etaHTML = '';
+  if (status === 'delivering') {
+    etaHTML = `<div class="eta delivering">ETA klant: ${formatETA(avgSeconds)}</div>`;
+  } else if (status === 'returning' && hasGps) {
+    const distToHub = distanceKm(d.lat, d.lng, HUB_LAT, HUB_LNG);
+    const etaSeconds = distToHub > 0 ? (distToHub / 30) * 3600 : avgSeconds;
+    etaHTML = `<div class="eta returning">ETA hub: ${formatETA(etaSeconds)}</div>`;
+  } else if (status === 'idle') {
+    etaHTML = `<div class="eta idle">Wacht op GPS of nieuwe rit</div>`;
+  }
+  return `
+    <article class="driver-card ${status} ${changedIds.has(String(d.id)) ? 'changed' : ''}">
+      <div class="driver-head">
+        <div class="driver-name">
+          <span class="status-dot ${status}"></span>
+          <span>${d.name || d.firstname || 'Onbekende bezorger'}</span>
+          ${safeNumber(d.orders) > 0 ? `<span class="badge orders">${safeNumber(d.orders)} order${safeNumber(d.orders) === 1 ? '' : 's'}</span>` : ''}
+        </div>
+        <span class="badge status-${status}">${statusLabel(status)}</span>
+      </div>
+      <div class="driver-info">
+        ${d.tel ? `<div class="row"><span class="label">Tel</span><span class="value">${d.tel}</span></div>` : ''}
+        ${firstOrder ? `<div class="row"><span class="label">Adres</span><span class="value">${firstOrder.address || 'Onbekend'}</span></div>` : ''}
+        ${firstOrder && firstOrder.type ? `<div class="row"><span class="label">Type</span><span class="value">${firstOrder.type}</span></div>` : ''}
+        <div class="row"><span class="label">GPS</span><span class="value">${hasGps ? 'Actief' : 'Geen signaal'}</span></div>
+        ${updateAge !== null ? `<div class="row"><span class="label">Laatste update</span><span class="value">${updateAge} min geleden</span></div>` : ''}
+      </div>
+      ${etaHTML}
+    </article>
+  `;
 }
-return `
-<article class="driver-card ${status} ${changedIds.has(String(d.id)) ? 'changed' : ''}">
-<div class="driver-head">
-<div class="driver-name">
-<span class="status-dot ${status}"></span>
-<span>${d.name || d.firstname || 'Onbekende bezorger'}</span>
-${safeNumber(d.orders) > 0 ? <span class="badge orders">${safeNumber(d.orders)} order${safeNumber(d.orders) === 1 ? '' : 's'}</span> : ''}
-</div>
-<span class="badge status-${status}">${statusLabel(status)}</span>
-</div>
-<div class="driver-info">
-${d.tel ? <div class="row"><span class="label">Tel</span><span class="value">${d.tel}</span></div> : ''}
-${firstOrder ? <div class="row"><span class="label">Adres</span><span class="value">${firstOrder.address || 'Onbekend'}</span></div> : ''}
-${firstOrder && firstOrder.type ? <div class="row"><span class="label">Type</span><span class="value">${firstOrder.type}</span></div> : ''}
-<div class="row"><span class="label">GPS</span><span class="value">${hasGps ? 'Actief' : 'Geen signaal'}</span></div>
-${updateAge !== null ? <div class="row"><span class="label">Laatste update</span><span class="value">${updateAge} min geleden</span></div> : ''}
-</div>
-${etaHTML}
-</article>
-`;
-}
+
 function setCounts(deliverers, orders, delivering, returning) {
-document.getElementById('driverCount').innerHTML = Bezorgers: <strong>${deliverers.length}</strong>;
-document.getElementById('orderCount').innerHTML = Orders: <strong>${orders.length}</strong>;
-document.getElementById('deliveringCount').textContent = String(delivering.length);
-document.getElementById('returningCount').textContent = String(returning.length);
+  document.getElementById('driverCount').innerHTML = `Bezorgers: <strong>${deliverers.length}</strong>`;
+  document.getElementById('orderCount').innerHTML = `Orders: <strong>${orders.length}</strong>`;
+  document.getElementById('deliveringCount').textContent = String(delivering.length);
+  document.getElementById('returningCount').textContent = String(returning.length);
 }
+
 function renderLists(deliverers, orders, changedIds = new Set()) {
-const ordersIndex = buildOrdersIndex(orders);
-const enriched = deliverers
-.map(d => ({ ...d, orderList: getOrdersForDeliverer(d, ordersIndex) }))
-.map(d => ({ ...d, uiStatus: deriveUiStatus(d, d.orderList) }));
-const delivering = enriched.filter(d => d.uiStatus === 'delivering');
-const returning = enriched.filter(d => ['returning', 'idle', 'offline'].includes(d.uiStatus));
-setCounts(deliverers, orders, delivering, returning);
-const deliveringEl = document.getElementById('delivering');
-const returningEl = document.getElementById('returning');
-deliveringEl.classList.remove('loading');
-returningEl.classList.remove('loading');
-deliveringEl.innerHTML = delivering.length
-? delivering.map(d => renderDriver(d, d.orderList, changedIds)).join('')
-: '<div class="no-data">Geen bezorgers onderweg naar klanten</div>';
-returningEl.innerHTML = returning.length
-? returning.map(d => renderDriver(d, d.orderList, changedIds)).join('')
-: '<div class="no-data">Geen bezorgers op weg terug of standby</div>';
-if (changedIds.size > 0) {
-setTimeout(() => {
-document.querySelectorAll('.driver-card.changed').forEach(el => el.classList.remove('changed'));
-}, 800);
+  const ordersIndex = buildOrdersIndex(orders);
+  const enriched = deliverers
+    .map(d => ({ ...d, orderList: getOrdersForDeliverer(d, ordersIndex) }))
+    .map(d => ({ ...d, uiStatus: deriveUiStatus(d, d.orderList) }));
+  const delivering = enriched.filter(d => d.uiStatus === 'delivering');
+  const returning = enriched.filter(d => ['returning', 'idle', 'offline'].includes(d.uiStatus));
+  setCounts(deliverers, orders, delivering, returning);
+  const deliveringEl = document.getElementById('delivering');
+  const returningEl = document.getElementById('returning');
+  deliveringEl.classList.remove('loading');
+  returningEl.classList.remove('loading');
+  deliveringEl.innerHTML = delivering.length
+    ? delivering.map(d => renderDriver(d, d.orderList, changedIds)).join('')
+    : '<div class="no-data">Geen bezorgers onderweg naar klanten</div>';
+  returningEl.innerHTML = returning.length
+    ? returning.map(d => renderDriver(d, d.orderList, changedIds)).join('')
+    : '<div class="no-data">Geen bezorgers op weg terug of standby</div>';
+  if (changedIds.size > 0) {
+    setTimeout(() => {
+      document.querySelectorAll('.driver-card.changed').forEach(el => el.classList.remove('changed'));
+    }, 800);
+  }
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent = `Bijgewerkt: ${now.toLocaleTimeString('nl-NL')}`;
 }
-}
+
 function diffChangedIds(nextDeliverers) {
-const changed = new Set();
-const nextMap = new Map(nextDeliverers.map(d => [String(d.id), d]));
-nextMap.forEach((item, id) => {
-const before = state.deliverersById.get(id);
-if (!before || JSON.stringify(before) !== JSON.stringify(item)) {
-changed.add(id);
+  const changed = new Set();
+  const nextMap = new Map(nextDeliverers.map(d => [String(d.id), d]));
+  nextMap.forEach((item, id) => {
+    const before = state.deliverersById.get(id);
+    if (!before || JSON.stringify(before) !== JSON.stringify(item)) {
+      changed.add(id);
+    }
+  });
+  state.deliverersById = nextMap;
+  return changed;
 }
-});
-state.deliverersById = nextMap;
-return changed;
+
+function setStatus(statusState, text) {
+  const dot = document.getElementById('liveDot');
+  const statusEl = document.getElementById('statusText');
+  dot.className = 'live-dot ' + statusState;
+  statusEl.textContent = text;
 }
-async function load() {
-try {
-const [deliverersRes, ordersRes] = await Promise.all([
-fetch(/api/deliverers?_t=${Date.now()}, { cache: 'no-store' }),
-fetch(/api/orders?_t=${Date.now()}, { cache: 'no-store' })
-]);
-if (!deliverersRes.ok || !ordersRes.ok) {
-throw new Error(API fout: deliverers ${deliverersRes.status}, orders ${ordersRes.status});
+
+async function fetchOrders() {
+  try {
+    const res = await fetch(`/api/orders?_t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    state.orders = Array.isArray(data.orders) ? data.orders : [];
+  } catch (e) {
+    console.warn('Orders ophalen mislukt:', e);
+  }
 }
-const deliverersData = await deliverersRes.json();
-const ordersData = await ordersRes.json();
-const deliverers = Array.isArray(deliverersData.deliverers) ? deliverersData.deliverers : [];
-const orders = Array.isArray(ordersData.orders) ? ordersData.orders : [];
-const changedIds = state.firstLoadDone
-? diffChangedIds(deliverers)
-: new Set(deliverers.map(d => String(d.id)));
-if (!state.firstLoadDone) {
-state.deliverersById = new Map(deliverers.map(d => [String(d.id), d]));
-state.firstLoadDone = true;
+
+function startSSE() {
+  if (sseSource) sseSource.close();
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  setStatus('reconnecting', 'Verbinden...');
+  sseSource = new EventSource('/api/deliverers-stream');
+  
+  sseSource.addEventListener('snapshot', (e) => {
+    const data = JSON.parse(e.data);
+    const deliverers = Array.isArray(data.deliverers) ? data.deliverers : [];
+    const changedIds = state.firstLoadDone ? diffChangedIds(deliverers) : new Set(deliverers.map(d => String(d.id)));
+    if (!state.firstLoadDone) {
+      state.deliverersById = new Map(deliverers.map(d => [String(d.id), d]));
+      state.firstLoadDone = true;
+    }
+    renderLists(deliverers, state.orders, changedIds);
+    setStatus('connected', 'Live');
+    fetchOrders();
+  });
+  
+  sseSource.addEventListener('deliverers-update', (e) => {
+    const data = JSON.parse(e.data);
+    const updates = data.updates || [];
+    updates.forEach(u => {
+      if (u.deliverer) {
+        state.deliverersById.set(String(u.deliverer.id), u.deliverer);
+      }
+    });
+    const deliverers = Array.from(state.deliverersById.values());
+    const changedIds = new Set(updates.map(u => String(u.deliverer.id)));
+    renderLists(deliverers, state.orders, changedIds);
+    setStatus('connected', 'Live');
+  });
+  
+  sseSource.addEventListener('reconnect', () => {
+    sseSource.close();
+    setStatus('reconnecting', 'Herverbinden...');
+    reconnectTimer = setTimeout(startSSE, 1000);
+  });
+  
+  sseSource.addEventListener('error', (e) => {
+    if (e.data) {
+      try {
+        const data = JSON.parse(e.data);
+        console.warn('SSE fout:', data.message);
+      } catch (err) {}
+    }
+  });
+  
+  sseSource.onerror = () => {
+    setStatus('error', 'Verbinding verbroken');
+    sseSource.close();
+    reconnectTimer = setTimeout(startSSE, 3000);
+  };
 }
-state.orders = orders;
-renderLists(deliverers, orders, changedIds);
-const now = new Date();
-document.getElementById('lastUpdate').textContent =
-Bijgewerkt: ${now.toLocaleTimeString('nl-NL')};
-} catch (err) {
-console.error(err);
-document.getElementById('delivering').innerHTML =
-'<div class="no-data error">Fout bij laden van bezorgers</div>';
-document.getElementById('returning').innerHTML =
-'<div class="no-data error">Fout bij laden van ritten</div>';
-document.getElementById('lastUpdate').textContent = 'Laden mislukt';
-}
-}
-load();
-setInterval(load, REFRESH_MS);
+
+startSSE();
+setInterval(fetchOrders, 30000);
 </script>
 </body>
 </html>
-
