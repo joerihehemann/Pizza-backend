@@ -330,6 +330,7 @@ function getOrdersForDeliverer(deliverer, index) {
 }
 
 function deriveUiStatus(d, orderList) {
+    console.log('⚙️ deriveUiStatus:', d.name || d.login, {hasGps, orders, age, coord: d.coord, lat: d.lat, lng: d.lng});
   const hasGps = Boolean(d.coord && Number.isFinite(d.lat) && Number.isFinite(d.lng));
   const orders = safeNumber(d.orders);
   const age = minutesAgo(d.date_update || d.last_login);
@@ -349,6 +350,7 @@ function statusLabel(status) {
 
 function renderDriver(d, orderList, changedIds) {
   const status = deriveUiStatus(d, orderList);
+    console.log('🔍 renderDriver:', d.name || d.login, {status, orders: d.orders, coord: d.coord, hasGps, orderList});
   const firstOrder = orderList[0] || null;
   const hasGps = Boolean(d.coord && Number.isFinite(d.lat) && Number.isFinite(d.lng));
   const avgSeconds = safeNumber(d.avg_n) || (safeNumber(d.avg_interval) * 60);
