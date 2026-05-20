@@ -539,8 +539,26 @@ function startSSE() {
   };
 }
 
-startSSE();
-setInterval(fetchOrders, 30000);
+// startSSE(); // TEMP: disabled for debug
+async function pollDeliverers() {
+  try {
+    const res = await fetch(`/api/deliverers?_t=${Date.now()}`);
+    const data = await res.json();
+    const deliverers = data.deliverers || [];
+    const changedIds = state.firstLoadDone ? diffChangedIds(deliverers) : new Set(deliverers.map(d => String(d.id)));
+    if (!state.firstLoadDone) {
+      state.deliverersById = new Map(deliverers.map(d => [String(d.id), d]));
+      state.firstLoadDone = true;
+    }
+    renderLists(deliverers, state.orders, changedIds);
+    setStatus('connected', 'Polling (elke 5s)');
+    fetchOrders();
+  } catch (err) {
+    setStatus('error', 'Fout bij laden');
+  }
+}
+pollDeliverers();
+setInterval(pollDeliverers, 5000);setInterval(fetchOrders, 30000);
 </script>
 </body>
 </html>
