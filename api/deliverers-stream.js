@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 
 const CLIENT_ID = process.env.FOODTICKET_CLIENT_ID;
 const API_KEY = process.env.FOODTICKET_API_KEY;
